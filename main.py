@@ -2,6 +2,7 @@ import bpy
 import math
 import os
 from random import randint
+from PIL import Image
 
 
 def generate_word():
@@ -22,18 +23,13 @@ def generate_word():
             directory=os.path.join(file_path, inner_path),
             filename=object_name
         )
-        bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.3)
-        bpy.data.objects[word].rotation_euler = (0, 0, math.radians(angles[i]))
+        z_pos = float(f"0.{randint(0, 1000)}")
+        bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.3 + z_pos)
+        bpy.data.objects[word].rotation_euler = (0, math.radians(randint(-20, 20)), math.radians(angles[i]))
     return result
 
 
-bpy.ops.wm.open_mainfile(filepath='close_to_success_8.blend')
-print(generate_word())
-cam = bpy.context.scene.camera
-filepath = "background.jpg"
-
-
-def setupcamera(c):
+def setupcamera(cam, c):
     # настройка положения камеры
 
     cam.rotation_euler[0] = math.radians(c[0])
@@ -45,64 +41,69 @@ def setupcamera(c):
     cam.location.z = c[5]
 
 
-setupcamera([75.8042, 0.000419, -299.221, 21.326, -13.4999, 9.32324])
+def render():
+    # вырезание заднего фона
+    img = Image.open("background.jpg")
+    x_pos = randint(0, img.width - 350)
+    y_pos = randint(0, img.height - 80)
+    img = img.crop((x_pos, y_pos, x_pos + 350, y_pos + 80))
+    img.save("nb.png")
 
-img = bpy.data.images.load(filepath)
-cam.data.show_background_images = True
-bg = cam.data.background_images.new()
-bg.image = img
-bpy.context.scene.render.film_transparent = True
+    # загрузка blend файла (камера и источник света)
+    bpy.ops.wm.open_mainfile(filepath='close_to_success_9.blend')
+    captcha_key = generate_word()
+    cam = bpy.context.scene.camera
+    filepath = "nb.png"
 
-bpy.context.scene.use_nodes = True
-tree = bpy.context.scene.node_tree
+    setupcamera(cam, [75.8042, 0.000419, -299.221, 21.326, -13.4999, 9.32324])
 
-for every_node in tree.nodes:
-    tree.nodes.remove(every_node)
+    # наложение заднего фона
+    img = bpy.data.images.load(filepath)
+    cam.data.show_background_images = True
+    bg = cam.data.background_images.new()
+    bg.image = img
+    bpy.context.scene.render.film_transparent = True
 
-RenderLayers_node = tree.nodes.new('CompositorNodeRLayers')
-RenderLayers_node.location = -300, 300
+    bpy.context.scene.use_nodes = True
+    tree = bpy.context.scene.node_tree
 
-comp_node = tree.nodes.new('CompositorNodeComposite')
-comp_node.location = 400, 300
+    for every_node in tree.nodes:
+        tree.nodes.remove(every_node)
 
-AplhaOver_node = tree.nodes.new(type="CompositorNodeAlphaOver")
-AplhaOver_node.location = 150, 450
+    RenderLayers_node = tree.nodes.new('CompositorNodeRLayers')
+    RenderLayers_node.location = -300, 300
 
-Scale_node = tree.nodes.new(type="CompositorNodeScale")
-bpy.data.scenes["Scene"].node_tree.nodes["Scale"].space = 'RENDER_SIZE'
-Scale_node.location = -150, 500
+    comp_node = tree.nodes.new('CompositorNodeComposite')
+    comp_node.location = 400, 300
 
-Image_node = tree.nodes.new(type="CompositorNodeImage")
-Image_node.image = img
-Image_node.location = -550, 500
+    AplhaOver_node = tree.nodes.new(type="CompositorNodeAlphaOver")
+    AplhaOver_node.location = 150, 450
 
-links = tree.links
-link1 = links.new(RenderLayers_node.outputs[0], AplhaOver_node.inputs[2])
-link2 = links.new(AplhaOver_node.outputs[0], comp_node.inputs[0])
-link3 = links.new(Scale_node.outputs[0], AplhaOver_node.inputs[1])
-link4 = links.new(Image_node.outputs[0], Scale_node.inputs[0])
+    Scale_node = tree.nodes.new(type="CompositorNodeScale")
+    bpy.data.scenes["Scene"].node_tree.nodes["Scale"].space = 'RENDER_SIZE'
+    Scale_node.location = -150, 500
 
-### Rendering Procedure
-render = bpy.context.scene.render
-scale = render.resolution_percentage / 10000
+    Image_node = tree.nodes.new(type="CompositorNodeImage")
+    Image_node.image = img
+    Image_node.location = -550, 500
 
-FILE_PATH = "result.png"
+    links = tree.links
+    link1 = links.new(RenderLayers_node.outputs[0], AplhaOver_node.inputs[2])
+    link2 = links.new(AplhaOver_node.outputs[0], comp_node.inputs[0])
+    link3 = links.new(Scale_node.outputs[0], AplhaOver_node.inputs[1])
+    link4 = links.new(Image_node.outputs[0], Scale_node.inputs[0])
 
-# Save Previous Path
-previous_path = bpy.context.scene.render.filepath
+    # рендер
+    FILE_PATH = "result.png"
 
-for mat in bpy.data.materials:
-    if not mat.use_nodes:
-        mat.metallic = 1
-        continue
-    for n in mat.node_tree.nodes:
-        if n.type == 'BSDF_PRINCIPLED':
-            n.inputs["Metallic"].default_value = 1
+    previous_path = bpy.context.scene.render.filepath
 
-# Render Image
+    bpy.context.scene.render.filepath = FILE_PATH
+    bpy.ops.render.render(write_still=True)
+    bpy.context.scene.render.filepath = previous_path
 
-bpy.context.scene.render.filepath = FILE_PATH
-bpy.ops.render.render(write_still=True)
+    return captcha_key
 
-# Restore Previous Path
-bpy.context.scene.render.filepath = previous_path
+
+if __name__ == "__main__":
+    render()
