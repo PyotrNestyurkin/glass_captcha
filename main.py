@@ -15,7 +15,7 @@ def generate_word():
         word = words[randint(0, len(words) - 1)]
         words.remove(word)
         result += word
-        file_path = f'glass_alphabet_container_2/{word}.blend'
+        file_path = f'alphabet/{word}.blend'
         inner_path = 'Object'
         object_name = word
         bpy.ops.wm.append(
@@ -47,13 +47,13 @@ def render():
     x_pos = randint(0, img.width - 350)
     y_pos = randint(0, img.height - 80)
     img = img.crop((x_pos, y_pos, x_pos + 350, y_pos + 80))
-    img.save("nb.png")
+    img.save("tiny_background.png")
 
     # загрузка blend файла (камера и источник света)
-    bpy.ops.wm.open_mainfile(filepath='close_to_success_9.blend')
+    bpy.ops.wm.open_mainfile(filepath='my_scene.blend')
     captcha_key = generate_word()
     cam = bpy.context.scene.camera
-    filepath = "nb.png"
+    filepath = "tiny_background.png"
 
     setupcamera(cam, [75.8042, 0.000419, -299.221, 21.326, -13.4999, 9.32324])
 
@@ -106,4 +106,4 @@ def render():
 
 
 if __name__ == "__main__":
-    render()
+    print(render())
