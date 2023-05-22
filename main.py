@@ -2,7 +2,8 @@ import bpy
 import math
 import os
 from random import randint
-from PIL import Image
+from PIL import Image, ImageOps
+
 
 
 def generate_word():
@@ -15,7 +16,7 @@ def generate_word():
         word = words[randint(0, len(words) - 1)]
         words.remove(word)
         result += word
-        file_path = f'alphabet/{word}.blend'
+        file_path = f'resources/glass_alphabet_container_1/{word}.blend'
         inner_path = 'Object'
         object_name = word
         bpy.ops.wm.append(
@@ -23,9 +24,9 @@ def generate_word():
             directory=os.path.join(file_path, inner_path),
             filename=object_name
         )
-        z_pos = float(f"0.{randint(0, 1000)}")
+        z_pos = float(f"0.{randint(0, 10)}")
         bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.3 + z_pos)
-        bpy.data.objects[word].rotation_euler = (0, math.radians(randint(-20, 20)), math.radians(angles[i]))
+        bpy.data.objects[word].rotation_euler = (0, math.radians(randint(-40, 40)), math.radians(angles[i]) + math.radians(randint(-10, 10)))
     return result
 
 
@@ -43,7 +44,7 @@ def setupcamera(cam, c):
 
 def render():
     # вырезание заднего фона
-    img = Image.open("background.jpg")
+    img = Image.open("img.png")
     x_pos = randint(0, img.width - 350)
     y_pos = randint(0, img.height - 80)
     img = img.crop((x_pos, y_pos, x_pos + 350, y_pos + 80))
@@ -101,6 +102,17 @@ def render():
     bpy.context.scene.render.filepath = FILE_PATH
     bpy.ops.render.render(write_still=True)
     bpy.context.scene.render.filepath = previous_path
+
+    # инверсия
+    from PIL import ImageGrab, ImageOps
+
+    # создание скриншота
+    img = Image.open("result.png")
+
+    # создадим негатив скриншота
+    img = ImageOps.invert(img.convert('RGB'))
+    # сохраним для сравнения
+    img.save('result.png')
 
     return captcha_key
 
