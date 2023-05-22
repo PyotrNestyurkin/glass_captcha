@@ -5,18 +5,17 @@ from random import randint
 from PIL import Image, ImageOps
 
 
-
 def generate_word():
     # генерация текстовой составляющей и расстановка букв
     result = ''
-    words = list(map(chr, range(65, 91)))
-    words.remove('O')
+    words = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н',
+             'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я', 'Ё']
     angles = [0, -2, -4, -7, -10, -15, -20, -25]
     for i in range(8):
         word = words[randint(0, len(words) - 1)]
         words.remove(word)
         result += word
-        file_path = f'resources/glass_alphabet_container_1/{word}.blend'
+        file_path = f'cyrillic_alphabet/{word}.blend'
         inner_path = 'Object'
         object_name = word
         bpy.ops.wm.append(
@@ -25,8 +24,9 @@ def generate_word():
             filename=object_name
         )
         z_pos = float(f"0.{randint(0, 10)}")
-        bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.3 + z_pos)
-        bpy.data.objects[word].rotation_euler = (0, math.radians(randint(-40, 40)), math.radians(angles[i]) + math.radians(randint(-10, 10)))
+        bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.5 + z_pos)bpy.data.objects[word].rotation_euler[0] = bpy.data.objects[word].rotation_euler[0] + math.radians(randint(-10, 10))
+        bpy.data.objects[word].rotation_euler[1] = bpy.data.objects[word].rotation_euler[1] + math.radians(randint(-40, 40))
+        bpy.data.objects[word].rotation_euler[2] = bpy.data.objects[word].rotation_euler[2] + math.radians(angles[i]) + math.radians(randint(-5, 5))
     return result
 
 
@@ -104,14 +104,8 @@ def render():
     bpy.context.scene.render.filepath = previous_path
 
     # инверсия
-    from PIL import ImageGrab, ImageOps
-
-    # создание скриншота
     img = Image.open("result.png")
-
-    # создадим негатив скриншота
     img = ImageOps.invert(img.convert('RGB'))
-    # сохраним для сравнения
     img.save('result.png')
 
     return captcha_key
