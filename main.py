@@ -8,14 +8,13 @@ from PIL import Image, ImageOps
 def generate_word():
     # генерация текстовой составляющей и расстановка букв
     result = ''
-    words = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н',
-             'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я', 'Ё']
+    words = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
     angles = [0, -2, -4, -7, -10, -15, -20, -25]
     for i in range(8):
         word = words[randint(0, len(words) - 1)]
         words.remove(word)
         result += word
-        file_path = f'cyrillic_alphabet/{word}.blend'
+        file_path = f'latin_alphabet/{word}.blend'
         inner_path = 'Object'
         object_name = word
         bpy.ops.wm.append(
@@ -24,7 +23,9 @@ def generate_word():
             filename=object_name
         )
         z_pos = float(f"0.{randint(0, 10)}")
-        bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.5 + z_pos)bpy.data.objects[word].rotation_euler[0] = bpy.data.objects[word].rotation_euler[0] + math.radians(randint(-10, 10))
+        bpy.data.objects[word].location = (0.7 * i, 1.9 * i - 10, 2.5 + z_pos)
+        # bpy.data.objects[word].rotation_euler = (0, math.radians(randint(-40, 40)), math.radians(angles[i]) + math.radians(randint(-10, 10)))
+        bpy.data.objects[word].rotation_euler[0] = bpy.data.objects[word].rotation_euler[0] + math.radians(randint(-10, 10))
         bpy.data.objects[word].rotation_euler[1] = bpy.data.objects[word].rotation_euler[1] + math.radians(randint(-40, 40))
         bpy.data.objects[word].rotation_euler[2] = bpy.data.objects[word].rotation_euler[2] + math.radians(angles[i]) + math.radians(randint(-5, 5))
     return result
